@@ -7,10 +7,6 @@ import csv
 import datetime
 
 import nltk
-import numpy as np
-from nltk.corpus import stopwords
-from nltk.stem import WordNetLemmatizer
-
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 
@@ -21,14 +17,21 @@ from sklearn.linear_model import LogisticRegression
 
 @st.cache_resource
 def setup_nltk():
+
     nltk.download("punkt", quiet=True)
     nltk.download("stopwords", quiet=True)
     nltk.download("wordnet", quiet=True)
 
-setup_nltk()
+    from nltk.corpus import stopwords
+    from nltk.stem import WordNetLemmatizer
 
-lemmatizer = WordNetLemmatizer()
-stop_words = set(stopwords.words("english"))
+    lemmatizer = WordNetLemmatizer()
+    stop_words = set(stopwords.words("english"))
+
+    return lemmatizer, stop_words
+
+
+lemmatizer, stop_words = setup_nltk()
 
 
 # ======================================
@@ -64,9 +67,7 @@ def load_intents():
     )
 
     with open(file_path, "r") as f:
-        intents = json.load(f)
-
-    return intents
+        return json.load(f)
 
 
 # ======================================
@@ -81,7 +82,6 @@ def train_model(intents):
 
     for intent in intents:
         for pattern in intent["patterns"]:
-
             patterns.append(preprocess(pattern))
             tags.append(intent["tag"])
 
