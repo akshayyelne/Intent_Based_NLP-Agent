@@ -1,36 +1,13 @@
 import streamlit as st
 import json
 import random
-import string
 import os
 import csv
 import datetime
-
-import nltk
-from nltk.corpus import stopwords
-from nltk.stem import WordNetLemmatizer
+import re
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
-
-
-# ================================
-# NLTK SETUP
-# ================================
-
-@st.cache_resource
-def init_nltk():
-    nltk.download("punkt", quiet=True)
-    nltk.download("stopwords", quiet=True)
-    nltk.download("wordnet", quiet=True)
-
-    lemmatizer = WordNetLemmatizer()
-    stop_words = set(stopwords.words("english"))
-
-    return lemmatizer, stop_words
-
-
-lemmatizer, stop_words = init_nltk()
 
 
 # ================================
@@ -38,19 +15,9 @@ lemmatizer, stop_words = init_nltk()
 # ================================
 
 def preprocess(text):
-
     text = text.lower()
-    text = text.translate(str.maketrans("", "", string.punctuation))
-
-    tokens = nltk.word_tokenize(text)
-
-    tokens = [
-        lemmatizer.lemmatize(word)
-        for word in tokens
-        if word not in stop_words
-    ]
-
-    return " ".join(tokens)
+    text = re.sub(r"[^\w\s]", "", text)
+    return text
 
 
 # ================================
@@ -81,7 +48,6 @@ def train_model(intents):
 
     for intent in intents:
         for pattern in intent["patterns"]:
-
             patterns.append(preprocess(pattern))
             tags.append(intent["tag"])
 
