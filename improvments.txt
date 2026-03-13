@@ -1,0 +1,27 @@
+Fixed : 13/02
+
+Remove showing entity list on the first user inpu
+if the user input is 'good bye or bye or other related intents' then refresh the bot to home page
+Change the sequence of the history page. Loading into csv and the display in web app ui. the history of the latest date must be at the top and the oldest date at the bottom
+Should be able to access via web browser. what url to be used. https://df13d296-7fcf-4527-aeb9-686bda61b9c8-00-a4ebw1risusv.riker.replit.dev/
+Show proceed with empty user input
+
+14/02 Error list
+go and compare your chatbot with others and make necessary changes. 
+Define full state machine instead of basic dailog manager using insurance claim case study
+Implement the business logic using below architecture for insurance claim
+
+
+User
+↓
+Intent + Entities
+↓
+FSM (Dialogue Manager)
+↓
+Business Logic Layer
+    ├── Policy Verification (DB Query)
+    ├── Claim Creation (DB Insert)
+    ├── Workflow Execution
+    └── API Simulation
+↓
+Response Generator
