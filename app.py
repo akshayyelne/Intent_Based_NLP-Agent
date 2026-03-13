@@ -27,20 +27,36 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 @st.cache_resource
 def setup_nltk():
-    packages = [
-        "punkt",
-        "wordnet",
-        "stopwords",
-        "averaged_perceptron_tagger",
-        "maxent_ne_chunker",
-        "words"
-    ]
 
-    for pkg in packages:
-        try:
-            nltk.data.find(pkg)
-        except LookupError:
-            nltk.download(pkg)
+    try:
+        nltk.data.find("tokenizers/punkt")
+    except LookupError:
+        nltk.download("punkt")
+
+    try:
+        nltk.data.find("corpora/stopwords")
+    except LookupError:
+        nltk.download("stopwords")
+
+    try:
+        nltk.data.find("corpora/wordnet")
+    except LookupError:
+        nltk.download("wordnet")
+
+    try:
+        nltk.data.find("taggers/averaged_perceptron_tagger")
+    except LookupError:
+        nltk.download("averaged_perceptron_tagger")
+
+    try:
+        nltk.data.find("chunkers/maxent_ne_chunker")
+    except LookupError:
+        nltk.download("maxent_ne_chunker")
+
+    try:
+        nltk.data.find("corpora/words")
+    except LookupError:
+        nltk.download("words")
 
 
 setup_nltk()
@@ -54,6 +70,7 @@ stop_words = set(stopwords.words("english"))
 # ==========================================================
 
 def preprocess_text(text):
+
     text = text.lower()
     text = text.translate(str.maketrans("", "", string.punctuation))
 
@@ -69,8 +86,10 @@ def preprocess_text(text):
 
 
 def preprocess_for_similarity(text):
+
     text = text.lower()
     text = text.translate(str.maketrans("", "", string.punctuation))
+
     return text.strip()
 
 
@@ -96,6 +115,7 @@ def extract_entities(text):
 
 @st.cache_resource
 def load_intents():
+
     file_path = os.path.join(os.path.dirname(__file__), "intents.json")
 
     with open(file_path) as f:
@@ -115,6 +135,7 @@ def train_models(intents):
 
     for intent in intents:
         for pattern in intent["patterns"]:
+
             tags.append(intent["tag"])
             clf_patterns.append(preprocess_text(pattern))
             sim_patterns.append(preprocess_for_similarity(pattern))
@@ -146,7 +167,6 @@ def train_models(intents):
 def load_model():
 
     intents = load_intents()
-
     model_data = train_models(intents)
 
     return intents, model_data
@@ -258,11 +278,9 @@ def chatbot(user_input, dm):
 
     if not clf_input:
         tag = tags[int(np.argmax(similarities))]
-
     else:
 
         clf_vec = clf_vectorizer.transform([clf_input])
-
         tag = clf.predict(clf_vec)[0]
 
         if not intent_matches_content(clf_input, tag):
@@ -294,7 +312,6 @@ def main():
     dm = DialogueManager()
 
     menu = ["Home", "Conversation History", "About"]
-
     choice = st.sidebar.selectbox("Menu", menu)
 
     log_file = os.path.join(os.path.dirname(__file__), "chat_log.csv")
@@ -312,7 +329,6 @@ def main():
             st.markdown("---")
 
         if not os.path.exists(log_file):
-
             with open(log_file, "w", newline="", encoding="utf-8") as f:
                 csv.writer(f).writerow(
                     ["User Input", "Chatbot Response", "Timestamp"]
@@ -344,7 +360,6 @@ def main():
             with open(log_file, "r", encoding="utf-8") as f:
 
                 reader = csv.reader(f)
-
                 next(reader)
 
                 rows = sorted(
