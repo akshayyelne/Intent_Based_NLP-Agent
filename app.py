@@ -21,13 +21,11 @@ from sklearn.linear_model import LogisticRegression
 
 @st.cache_resource
 def setup_nltk():
-    nltk.data.path.append("/home/adminuser/nltk_data")
-
+    nltk.download("punkt", quiet=True)
+    nltk.download("stopwords", quiet=True)
+    nltk.download("wordnet", quiet=True)
 
 setup_nltk()
-
-lemmatizer = WordNetLemmatizer()
-stop_words = set(stopwords.words("english"))
 
 
 # ======================================
