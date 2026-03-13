@@ -8,11 +8,19 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 
 
+# ==============================
+# TEXT PREPROCESSING
+# ==============================
+
 def preprocess(text):
     text = text.lower()
     text = re.sub(r"[^\w\s]", "", text)
     return text
 
+
+# ==============================
+# LOAD INTENTS + TRAIN MODEL
+# ==============================
 
 @st.cache_resource
 def load_model():
@@ -39,6 +47,10 @@ def load_model():
     return intents, model, vectorizer
 
 
+# ==============================
+# GET CHATBOT RESPONSE
+# ==============================
+
 def get_response(user_input, intents, model, vectorizer):
 
     processed = preprocess(user_input)
@@ -54,33 +66,52 @@ def get_response(user_input, intents, model, vectorizer):
     return "Sorry, I didn't understand that."
 
 
+# ==============================
+# MAIN STREAMLIT APP
+# ==============================
+
 def main():
 
-    st.title("Intent-Based NLP Chatbot")
+    st.title("🤖 AI Intent-Based NLP Chatbot")
+    st.caption("Built with Python, Streamlit and Scikit-Learn")
 
     intents, model, vectorizer = load_model()
 
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
 
-    user_input = st.text_input("You:")
+    if "user_input" not in st.session_state:
+        st.session_state.user_input = ""
 
-    if user_input:
+    # User input box
+    user_input = st.text_input("You:", key="user_input")
 
-        response = get_response(user_input, intents, model, vectorizer)
+    # Send button
+    if st.button("Send"):
 
-        st.session_state.chat_history.append(("You", user_input))
-        st.session_state.chat_history.append(("Bot", response))
+        if user_input.strip() != "":
 
-        st.rerun()
+            response = get_response(user_input, intents, model, vectorizer)
 
+            st.session_state.chat_history.append(("You", user_input))
+            st.session_state.chat_history.append(("Bot", response))
+
+            st.session_state.user_input = ""
+
+    st.divider()
+
+    # Chat history display
     for speaker, message in st.session_state.chat_history:
 
         if speaker == "You":
-            st.markdown(f"**You:** {message}")
+            st.markdown(f"🧑 **You:** {message}")
         else:
-            st.markdown(f"**Bot:** {message}")
+            st.markdown(f"🤖 **Bot:** {message}")
 
+
+# ==============================
+# RUN APP
+# ==============================
 
 if __name__ == "__main__":
     main()
