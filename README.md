@@ -35,6 +35,10 @@ This project demonstrates the development and implementation of a chatbot using 
 - Use advanced **transformer models** like BERT or GPT for more sophisticated responses.
 - Deploy the chatbot as a **web or mobile application** for enhanced accessibility.
 
+**- how to run this app**
+
+https://intentbasednlp-agent-ncpjsiqy84uqt7zyvfgr5e.streamlit.app/
+
 
 ## **Contributors**
 
