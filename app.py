@@ -8,27 +8,16 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 
 
-# ================================
-# TEXT PREPROCESSING
-# ================================
-
 def preprocess(text):
     text = text.lower()
     text = re.sub(r"[^\w\s]", "", text)
     return text
 
 
-# ================================
-# LOAD MODEL + DATA
-# ================================
-
 @st.cache_resource
-def load_chatbot():
+def load_model():
 
-    path = os.path.join(
-        os.path.dirname(__file__),
-        "intents.json"
-    )
+    path = os.path.join(os.path.dirname(__file__), "intents.json")
 
     with open(path) as f:
         intents = json.load(f)
@@ -50,14 +39,7 @@ def load_chatbot():
     return intents, model, vectorizer
 
 
-intents, model, vectorizer = load_chatbot()
-
-
-# ================================
-# RESPONSE FUNCTION
-# ================================
-
-def get_response(user_input):
+def get_response(user_input, intents, model, vectorizer):
 
     processed = preprocess(user_input)
 
@@ -72,34 +54,33 @@ def get_response(user_input):
     return "Sorry, I didn't understand that."
 
 
-# ================================
-# STREAMLIT UI
-# ================================
+def main():
 
-st.title("Intent-Based NLP Chatbot")
+    st.title("Intent-Based NLP Chatbot")
 
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []
+    intents, model, vectorizer = load_model()
 
-user_input = st.text_input("You:")
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = []
 
-if user_input:
+    user_input = st.text_input("You:")
 
-    response = get_response(user_input)
+    if user_input:
 
-    st.session_state.chat_history.append(("You", user_input))
-    st.session_state.chat_history.append(("Bot", response))
+        response = get_response(user_input, intents, model, vectorizer)
 
-    st.rerun()
+        st.session_state.chat_history.append(("You", user_input))
+        st.session_state.chat_history.append(("Bot", response))
+
+        st.rerun()
+
+    for speaker, message in st.session_state.chat_history:
+
+        if speaker == "You":
+            st.markdown(f"**You:** {message}")
+        else:
+            st.markdown(f"**Bot:** {message}")
 
 
-# ================================
-# CHAT HISTORY
-# ================================
-
-for speaker, message in st.session_state.chat_history:
-
-    if speaker == "You":
-        st.markdown(f"**You:** {message}")
-    else:
-        st.markdown(f"**Bot:** {message}")
+if __name__ == "__main__":
+    main()
