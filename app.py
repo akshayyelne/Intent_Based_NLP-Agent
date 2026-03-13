@@ -8,9 +8,9 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 
 
-# ==============================
-# TEXT PREPROCESSING
-# ==============================
+# -------------------------
+# Text preprocessing
+# -------------------------
 
 def preprocess(text):
     text = text.lower()
@@ -18,9 +18,9 @@ def preprocess(text):
     return text
 
 
-# ==============================
-# LOAD INTENTS + TRAIN MODEL
-# ==============================
+# -------------------------
+# Load intents + train model
+# -------------------------
 
 @st.cache_resource
 def load_model():
@@ -47,9 +47,9 @@ def load_model():
     return intents, model, vectorizer
 
 
-# ==============================
-# GET CHATBOT RESPONSE
-# ==============================
+# -------------------------
+# Get chatbot response
+# -------------------------
 
 def get_response(user_input, intents, model, vectorizer):
 
@@ -66,9 +66,9 @@ def get_response(user_input, intents, model, vectorizer):
     return "Sorry, I didn't understand that."
 
 
-# ==============================
-# MAIN STREAMLIT APP
-# ==============================
+# -------------------------
+# Main Streamlit App
+# -------------------------
 
 def main():
 
@@ -80,13 +80,8 @@ def main():
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
 
-    if "user_input" not in st.session_state:
-        st.session_state.user_input = ""
+    user_input = st.text_input("You:")
 
-    # User input box
-    user_input = st.text_input("You:", key="user_input")
-
-    # Send button
     if st.button("Send"):
 
         if user_input.strip() != "":
@@ -96,11 +91,8 @@ def main():
             st.session_state.chat_history.append(("You", user_input))
             st.session_state.chat_history.append(("Bot", response))
 
-            st.session_state.user_input = ""
-
     st.divider()
 
-    # Chat history display
     for speaker, message in st.session_state.chat_history:
 
         if speaker == "You":
@@ -109,9 +101,9 @@ def main():
             st.markdown(f"🤖 **Bot:** {message}")
 
 
-# ==============================
-# RUN APP
-# ==============================
+# -------------------------
+# Run app
+# -------------------------
 
 if __name__ == "__main__":
     main()
