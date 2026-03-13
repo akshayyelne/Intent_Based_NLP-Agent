@@ -16,7 +16,7 @@ from sklearn.linear_model import LogisticRegression
 
 
 # ======================================
-# SAFE NLTK SETUP (NO DOWNLOADS)
+# SAFE NLTK SETUP
 # ======================================
 
 @st.cache_resource
@@ -26,6 +26,9 @@ def setup_nltk():
     nltk.download("wordnet", quiet=True)
 
 setup_nltk()
+
+lemmatizer = WordNetLemmatizer()
+stop_words = set(stopwords.words("english"))
 
 
 # ======================================
@@ -54,7 +57,6 @@ def preprocess(text):
 
 @st.cache_resource
 def load_intents():
-    """Load intents from intents.json"""
 
     file_path = os.path.join(
         os.path.dirname(__file__),
