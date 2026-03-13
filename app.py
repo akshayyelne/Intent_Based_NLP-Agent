@@ -19,11 +19,11 @@ def preprocess(text):
 
 
 # ================================
-# LOAD INTENTS
+# LOAD MODEL + DATA
 # ================================
 
 @st.cache_resource
-def load_intents():
+def load_chatbot():
 
     path = os.path.join(
         os.path.dirname(__file__),
@@ -31,15 +31,7 @@ def load_intents():
     )
 
     with open(path) as f:
-        return json.load(f)
-
-
-# ================================
-# TRAIN MODEL
-# ================================
-
-@st.cache_resource
-def train_model(intents):
+        intents = json.load(f)
 
     patterns = []
     tags = []
@@ -55,11 +47,10 @@ def train_model(intents):
     model = LogisticRegression(max_iter=1000)
     model.fit(X, tags)
 
-    return model, vectorizer
+    return intents, model, vectorizer
 
 
-intents = load_intents()
-model, vectorizer = train_model(intents)
+intents, model, vectorizer = load_chatbot()
 
 
 # ================================
