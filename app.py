@@ -19,20 +19,21 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 
 # ==========================================================
-# NLTK SETUP
+# SAFE NLTK SETUP (STREAMLIT CLOUD SAFE)
 # ==========================================================
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
 
-def download_nltk():
+@st.cache_resource
+def setup_nltk():
     packages = [
         "punkt",
         "wordnet",
         "stopwords",
         "averaged_perceptron_tagger",
         "maxent_ne_chunker",
-        "words",
+        "words"
     ]
 
     for pkg in packages:
@@ -42,7 +43,7 @@ def download_nltk():
             nltk.download(pkg)
 
 
-download_nltk()
+setup_nltk()
 
 lemmatizer = WordNetLemmatizer()
 stop_words = set(stopwords.words("english"))
@@ -53,7 +54,6 @@ stop_words = set(stopwords.words("english"))
 # ==========================================================
 
 def preprocess_text(text):
-    """Full preprocessing: lowercase, remove punctuation, stopwords, lemmatize."""
     text = text.lower()
     text = text.translate(str.maketrans("", "", string.punctuation))
 
@@ -69,25 +69,25 @@ def preprocess_text(text):
 
 
 def preprocess_for_similarity(text):
-    """Light preprocessing for similarity matching."""
     text = text.lower()
     text = text.translate(str.maketrans("", "", string.punctuation))
     return text.strip()
 
 
 def extract_entities(text):
+
     tokens = nltk.word_tokenize(text)
     tagged = pos_tag(tokens)
     chunks = ne_chunk(tagged)
 
-    extracted = []
+    entities = []
 
     for chunk in chunks:
         if hasattr(chunk, "label"):
             entity = " ".join(c[0] for c in chunk)
-            extracted.append((entity, chunk.label()))
+            entities.append((entity, chunk.label()))
 
-    return extracted
+    return entities
 
 
 # ==========================================================
@@ -103,19 +103,18 @@ def load_intents():
 
 
 # ==========================================================
-# MODEL TRAINING
+# TRAIN MODELS
 # ==========================================================
 
 @st.cache_resource
-def train_models(_intents):
+def train_models(intents):
 
     tags = []
     clf_patterns = []
     sim_patterns = []
 
-    for intent in _intents:
+    for intent in intents:
         for pattern in intent["patterns"]:
-
             tags.append(intent["tag"])
             clf_patterns.append(preprocess_text(pattern))
             sim_patterns.append(preprocess_for_similarity(pattern))
@@ -140,26 +139,27 @@ def train_models(_intents):
             clf_patterns[i].split()
         )
 
-    return (
-        classifier,
-        clf_vectorizer,
-        sim_vectorizer,
-        X_sim,
-        tags,
-        intent_vocab,
-    )
+    return classifier, clf_vectorizer, sim_vectorizer, X_sim, tags, intent_vocab
 
 
-intents = load_intents()
+@st.cache_resource
+def load_model():
 
-(
+    intents = load_intents()
+
+    model_data = train_models(intents)
+
+    return intents, model_data
+
+
+intents, (
     clf,
     clf_vectorizer,
     sim_vectorizer,
     X_sim,
     tags,
-    intent_vocab,
-) = train_models(intents)
+    intent_vocab
+) = load_model()
 
 
 SIMILARITY_THRESHOLD = 0.15
@@ -193,7 +193,6 @@ class DialogueManager:
     def __init__(self):
 
         if "dialogue_state" not in st.session_state:
-
             st.session_state.dialogue_state = {
                 "last_intent": None,
                 "context": {},
@@ -211,18 +210,15 @@ class DialogueManager:
         for ent, label in entities:
             st.session_state.dialogue_state["context"][label] = ent
 
-        st.session_state.chat_history.append(
-            {
-                "user": user_input,
-                "bot": response,
-                "entities": entities,
-            }
-        )
+        st.session_state.chat_history.append({
+            "user": user_input,
+            "bot": response,
+            "entities": entities
+        })
 
     def contextual_response(self, intent, base_response):
 
         context = st.session_state.dialogue_state["context"]
-
         turn = st.session_state.dialogue_state["turn_count"]
 
         if intent == "greeting" and turn > 1:
@@ -301,6 +297,8 @@ def main():
 
     choice = st.sidebar.selectbox("Menu", menu)
 
+    log_file = os.path.join(os.path.dirname(__file__), "chat_log.csv")
+
     if choice == "Home":
 
         st.write(
@@ -309,68 +307,30 @@ def main():
         )
 
         for chat in st.session_state.chat_history:
-
             st.markdown(f"**You:** {chat['user']}")
-
             st.markdown(f"**Chatbot:** {chat['bot']}")
-
             st.markdown("---")
-
-        log_file = os.path.join(
-            os.path.dirname(__file__),
-            "chat_log.csv",
-        )
 
         if not os.path.exists(log_file):
 
-            with open(
-                log_file,
-                "w",
-                newline="",
-                encoding="utf-8",
-            ) as f:
-
+            with open(log_file, "w", newline="", encoding="utf-8") as f:
                 csv.writer(f).writerow(
                     ["User Input", "Chatbot Response", "Timestamp"]
                 )
 
-        def clear_input():
+        user_input = st.text_input("You:")
 
-            st.session_state.temp_input = (
-                st.session_state.user_input_box
-            )
+        if user_input:
 
-            st.session_state.user_input_box = ""
-
-        st.text_input(
-            "You:",
-            key="user_input_box",
-            on_change=clear_input,
-        )
-
-        actual_input = st.session_state.get("temp_input", "")
-
-        if actual_input and actual_input != st.session_state.get(
-            "last_input", ""
-        ):
-
-            st.session_state.last_input = actual_input
-
-            response, entities = chatbot(actual_input, dm)
+            response, entities = chatbot(user_input, dm)
 
             timestamp = datetime.datetime.now().strftime(
                 "%Y-%m-%d %H:%M:%S"
             )
 
-            with open(
-                log_file,
-                "a",
-                newline="",
-                encoding="utf-8",
-            ) as f:
-
+            with open(log_file, "a", newline="", encoding="utf-8") as f:
                 csv.writer(f).writerow(
-                    [actual_input, response, timestamp]
+                    [user_input, response, timestamp]
                 )
 
             st.rerun()
@@ -378,11 +338,6 @@ def main():
     elif choice == "Conversation History":
 
         st.header("Conversation History")
-
-        log_file = os.path.join(
-            os.path.dirname(__file__),
-            "chat_log.csv",
-        )
 
         if os.path.exists(log_file):
 
@@ -395,38 +350,33 @@ def main():
                 rows = sorted(
                     list(reader),
                     key=lambda x: x[2],
-                    reverse=True,
+                    reverse=True
                 )
 
             for row in rows:
-
                 st.text(f"User: {row[0]}")
                 st.text(f"Chatbot: {row[1]}")
                 st.text(f"Timestamp: {row[2]}")
-
                 st.markdown("---")
 
         else:
-
             st.write("No conversation history found.")
 
     elif choice == "About":
 
         st.write(
             "This project demonstrates an intent-based chatbot built "
-            "using Natural Language Processing (NLP) and Streamlit."
+            "using NLP and Streamlit."
         )
 
         st.subheader("Technology Stack")
 
-        st.write(
-            """
-            - Natural Language Processing (NLTK)
-            - Logistic Regression for intent classification
-            - TF-IDF vectorization
-            - Streamlit web application framework
-            """
-        )
+        st.write("""
+        - Natural Language Processing (NLTK)
+        - Logistic Regression
+        - TF-IDF Vectorization
+        - Streamlit Web App
+        """)
 
 
 # ==========================================================
