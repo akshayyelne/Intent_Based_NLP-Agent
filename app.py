@@ -7,6 +7,7 @@ import csv
 import datetime
 
 import nltk
+import numpy as np
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 
@@ -14,38 +15,24 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 
 
-# ==============================
-# NLTK SAFE SETUP
-# ==============================
+# ======================================
+# SAFE NLTK SETUP (NO DOWNLOADS)
+# ======================================
 
 @st.cache_resource
 def setup_nltk():
-    try:
-        nltk.data.find("tokenizers/punkt")
-    except:
-        nltk.download("punkt")
-
-    try:
-        nltk.data.find("corpora/stopwords")
-    except:
-        nltk.download("stopwords")
-
-    try:
-        nltk.data.find("corpora/wordnet")
-    except:
-        nltk.download("wordnet")
+    nltk.data.path.append("/home/adminuser/nltk_data")
 
 
 setup_nltk()
-
 
 lemmatizer = WordNetLemmatizer()
 stop_words = set(stopwords.words("english"))
 
 
-# ==============================
+# ======================================
 # TEXT PREPROCESSING
-# ==============================
+# ======================================
 
 def preprocess(text):
 
@@ -55,28 +42,36 @@ def preprocess(text):
     tokens = nltk.word_tokenize(text)
 
     tokens = [
-        lemmatizer.lemmatize(w)
-        for w in tokens
-        if w not in stop_words
+        lemmatizer.lemmatize(word)
+        for word in tokens
+        if word not in stop_words
     ]
 
     return " ".join(tokens)
 
 
-# ==============================
+# ======================================
 # LOAD INTENTS
-# ==============================
+# ======================================
 
 @st.cache_resource
 def load_intents():
+    """Load intents from intents.json"""
 
-    with open("intents.json") as f:
-        return json.load(f)
+    file_path = os.path.join(
+        os.path.dirname(__file__),
+        "intents.json"
+    )
+
+    with open(file_path, "r") as f:
+        intents = json.load(f)
+
+    return intents
 
 
-# ==============================
+# ======================================
 # TRAIN MODEL
-# ==============================
+# ======================================
 
 @st.cache_resource
 def train_model(intents):
@@ -103,9 +98,9 @@ intents = load_intents()
 model, vectorizer = train_model(intents)
 
 
-# ==============================
+# ======================================
 # CHATBOT RESPONSE
-# ==============================
+# ======================================
 
 def get_response(user_input):
 
@@ -122,9 +117,9 @@ def get_response(user_input):
     return "Sorry, I didn't understand that."
 
 
-# ==============================
+# ======================================
 # STREAMLIT UI
-# ==============================
+# ======================================
 
 st.title("Intent-Based NLP Chatbot")
 
@@ -133,7 +128,7 @@ st.write("Ask me a question.")
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
-user_input = st.text_input("You")
+user_input = st.text_input("You:")
 
 if user_input:
 
@@ -142,7 +137,7 @@ if user_input:
     st.session_state.chat_history.append(("You", user_input))
     st.session_state.chat_history.append(("Bot", response))
 
-    log_file = "chat_log.csv"
+    log_file = os.path.join(os.path.dirname(__file__), "chat_log.csv")
 
     if not os.path.exists(log_file):
         with open(log_file, "w", newline="") as f:
@@ -160,14 +155,13 @@ if user_input:
     st.rerun()
 
 
-# ==============================
+# ======================================
 # DISPLAY CHAT HISTORY
-# ==============================
+# ======================================
 
 for speaker, message in st.session_state.chat_history:
 
     if speaker == "You":
         st.markdown(f"**You:** {message}")
-
     else:
         st.markdown(f"**Bot:** {message}")
