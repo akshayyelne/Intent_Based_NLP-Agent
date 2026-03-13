@@ -7,23 +7,22 @@ import csv
 import datetime
 
 import nltk
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
+
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 
 
-# ======================================
-# SAFE NLTK SETUP
-# ======================================
+# ================================
+# NLTK SETUP
+# ================================
 
 @st.cache_resource
-def setup_nltk():
-
+def init_nltk():
     nltk.download("punkt", quiet=True)
     nltk.download("stopwords", quiet=True)
     nltk.download("wordnet", quiet=True)
-
-    from nltk.corpus import stopwords
-    from nltk.stem import WordNetLemmatizer
 
     lemmatizer = WordNetLemmatizer()
     stop_words = set(stopwords.words("english"))
@@ -31,12 +30,12 @@ def setup_nltk():
     return lemmatizer, stop_words
 
 
-lemmatizer, stop_words = setup_nltk()
+lemmatizer, stop_words = init_nltk()
 
 
-# ======================================
+# ================================
 # TEXT PREPROCESSING
-# ======================================
+# ================================
 
 def preprocess(text):
 
@@ -54,9 +53,9 @@ def preprocess(text):
     return " ".join(tokens)
 
 
-# ======================================
+# ================================
 # LOAD INTENTS
-# ======================================
+# ================================
 
 @st.cache_resource
 def load_intents():
@@ -66,13 +65,13 @@ def load_intents():
         "intents.json"
     )
 
-    with open(file_path, "r") as f:
+    with open(file_path) as f:
         return json.load(f)
 
 
-# ======================================
+# ================================
 # TRAIN MODEL
-# ======================================
+# ================================
 
 @st.cache_resource
 def train_model(intents):
@@ -82,6 +81,7 @@ def train_model(intents):
 
     for intent in intents:
         for pattern in intent["patterns"]:
+
             patterns.append(preprocess(pattern))
             tags.append(intent["tag"])
 
@@ -98,9 +98,9 @@ intents = load_intents()
 model, vectorizer = train_model(intents)
 
 
-# ======================================
-# CHATBOT RESPONSE
-# ======================================
+# ================================
+# RESPONSE FUNCTION
+# ================================
 
 def get_response(user_input):
 
@@ -117,13 +117,11 @@ def get_response(user_input):
     return "Sorry, I didn't understand that."
 
 
-# ======================================
+# ================================
 # STREAMLIT UI
-# ======================================
+# ================================
 
 st.title("Intent-Based NLP Chatbot")
-
-st.write("Ask me a question.")
 
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
@@ -155,9 +153,9 @@ if user_input:
     st.rerun()
 
 
-# ======================================
-# DISPLAY CHAT HISTORY
-# ======================================
+# ================================
+# CHAT HISTORY
+# ================================
 
 for speaker, message in st.session_state.chat_history:
 
