@@ -2,8 +2,6 @@ import streamlit as st
 import json
 import random
 import os
-import csv
-import datetime
 import re
 
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -27,12 +25,12 @@ def preprocess(text):
 @st.cache_resource
 def load_intents():
 
-    file_path = os.path.join(
+    path = os.path.join(
         os.path.dirname(__file__),
         "intents.json"
     )
 
-    with open(file_path) as f:
+    with open(path) as f:
         return json.load(f)
 
 
@@ -100,21 +98,6 @@ if user_input:
 
     st.session_state.chat_history.append(("You", user_input))
     st.session_state.chat_history.append(("Bot", response))
-
-    log_file = os.path.join(os.path.dirname(__file__), "chat_log.csv")
-
-    if not os.path.exists(log_file):
-        with open(log_file, "w", newline="") as f:
-            writer = csv.writer(f)
-            writer.writerow(["User", "Bot", "Timestamp"])
-
-    with open(log_file, "a", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerow([
-            user_input,
-            response,
-            datetime.datetime.now()
-        ])
 
     st.rerun()
 
