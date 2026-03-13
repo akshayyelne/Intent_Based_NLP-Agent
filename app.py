@@ -51,9 +51,7 @@ def load_model():
 def get_response(user_input, intents, model, vectorizer):
 
     processed = preprocess(user_input)
-
     X = vectorizer.transform([processed])
-
     tag = model.predict(X)[0]
 
     for intent in intents:
@@ -64,7 +62,7 @@ def get_response(user_input, intents, model, vectorizer):
 
 
 # -----------------------------
-# Main Streamlit App
+# Main App
 # -----------------------------
 def main():
 
@@ -76,11 +74,13 @@ def main():
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
 
-    user_input = st.text_input("You:")
+    # -------- Chat input form --------
+    with st.form("chat_form", clear_on_submit=True):
 
-    if st.button("Send"):
+        user_input = st.text_input("You:")
+        submitted = st.form_submit_button("Send")
 
-        if user_input.strip() != "":
+        if submitted and user_input.strip():
 
             response = get_response(user_input, intents, model, vectorizer)
 
@@ -89,6 +89,7 @@ def main():
 
     st.divider()
 
+    # -------- Chat display --------
     for speaker, message in st.session_state.chat_history:
 
         if speaker == "You":
@@ -98,7 +99,7 @@ def main():
 
 
 # -----------------------------
-# Run app
+# Run App
 # -----------------------------
 if __name__ == "__main__":
     main()
